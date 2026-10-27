@@ -18,7 +18,7 @@ export const IDS = {
 export const ORGANIZER_ID = 'user-organizer';
 export const MEMBER_ID = 'user-member';
 
-export const COVER = 'https://parity.supabase.co/storage/cover.svg';
+export const COVER = 'https://xaiamosmktaowsxpcrde.supabase.co/storage/cover.svg';
 export const COVER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#8a6d3b"/></svg>';
 
 const base = {

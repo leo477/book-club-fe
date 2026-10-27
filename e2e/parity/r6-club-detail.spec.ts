@@ -103,8 +103,8 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     expect(seo.canonical).toBe(`${SITE}${club()}`);
     expect(seo.ogTitle).toBe('Нічні читачі');
     expect(seo.ogUrl).toBe(`${SITE}${club()}`);
-    expect(seo.ogImage).toBe('https://parity.supabase.co/storage/cover.svg');
-    expect(html).toMatch(/<meta name="twitter:image" content="https:\/\/parity\.supabase\.co\/storage\/cover\.svg"/);
+    expect(seo.ogImage).toBe('https://xaiamosmktaowsxpcrde.supabase.co/storage/cover.svg');
+    expect(html).toMatch(/<meta name="twitter:image" content="https:\/\/xaiamosmktaowsxpcrde\.supabase\.co\/storage\/cover\.svg"/);
     expect(html).toMatch(/<meta name="robots" content="index, ?follow"/);
     expect(html).toContain('Нічні читачі'); // h1 in server HTML
 
@@ -167,11 +167,11 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     expect(body).toContain('Закритий клуб');
     expect(body).toContain('data-testid="private-stub"');
     expect(body).not.toContain('Читаємо сучасну українську прозу');
-    expect(body).not.toContain('parity.supabase.co');
+    expect(body).not.toContain('xaiamosmktaowsxpcrde.supabase.co');
     expect(body).not.toContain('Хрещатик');
     const metas = head.match(/<meta[^>]*>/g)!.join('\n');
     expect(metas).not.toContain('Закритий клуб');
-    expect(metas).not.toContain('parity.supabase.co');
+    expect(metas).not.toContain('xaiamosmktaowsxpcrde.supabase.co');
   });
 
   test('next: private club stub: guests get the minimal view, members/organizers/admins the full club without a reload', async ({ page }, ti) => {

@@ -39,6 +39,8 @@ describe('chat socket origin in every CSP', () => {
       expect(img).toContain('https://books.google.com');
       expect(img).toContain('https://books.googleusercontent.com');
       expect(img).not.toContain('https:');
+      expect(img.some((h) => h.includes('*'))).toBe(false);
+      expect(img).toContain('https://xaiamosmktaowsxpcrde.supabase.co');
     }
   });
 

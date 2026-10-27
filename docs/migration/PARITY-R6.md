@@ -99,7 +99,7 @@ Follow-up result at HEAD `d9b175f`: `r6-club-detail.spec.ts` + `r6-dual.spec.ts`
 - Seeded end-to-end (`e2e/ui/clubs.spec.ts`, `a11y-authenticated.spec.ts`) and any signed-in behaviour against a real backend, real cookie auth, CSRF Origin and 401-refresh-replay on this page.
 - A club with events, cover, book vote and members on the real backend (production has one empty public club): all those paths were exercised against the mock only. ISR behaviour on Vercel (as opposed to `next start`) and the real `revalidate` call from the backend (R6 optional BE task is not in this repo).
 - Field performance (LCP/INP/CLS), analytics, Search Console, Rich Results test, cold-start behaviour of the real backend for the 3 s server timeout.
-- Headers of a deployed preview (CSP nonce, HSTS) were only spot-checked locally (CSP `img-src` allows `https://*.supabase.co` only, identical to legacy, so cover images from any other host are blocked on both targets).
+- Headers of a deployed preview (CSP nonce, HSTS) were only spot-checked locally (CSP `img-src` allows only the project host `https://xaiamosmktaowsxpcrde.supabase.co` for Supabase, pinned in SCRUM-67; legacy still used the `*.supabase.co` wildcard, so cover images from any other host are blocked on the Next target).
 - Edge Config propagation and rollback for `/clubs/:id` (devops).
 - Revalidation hook verified locally: 401 without or with a wrong secret, 400 for bad tags, 405 for GET, not shadowed by the `/api` rewrite; a backend edit stays invisible (600 s cache) until `POST /_internal/revalidate` with the secret, then appears on the next request.
 

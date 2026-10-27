@@ -31,6 +31,8 @@ describe('buildCsp', () => {
     expect(img).toContain('https://books.googleusercontent.com');
     expect(img).not.toContain('https:');
     expect(img).not.toContain('*');
+    expect(img.some((h) => h.includes('*'))).toBe(false);
+    expect(img).toContain('https://xaiamosmktaowsxpcrde.supabase.co');
   });
 
   it('allows eval in dev only', () => {
