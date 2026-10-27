@@ -51,9 +51,13 @@ const localDate = (iso: string) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-function setup(event: Record<string, unknown> | number = stored(), user: Record<string, unknown> = { id: 'u1', role: 'organizer' }) {
+/** `membership` is the viewer's /my-membership answer for the event's club; a number answers with that status. */
+function setup(event: Record<string, unknown> | number = stored(), user: Record<string, unknown> = { id: 'u1', role: 'organizer' }, membership: Record<string, unknown> | number = { isMember: true, role: 'organizer' }) {
   mockSession(user);
-  server.use(http.get(`${API}/events/${ID}`, () => (typeof event === 'number' ? HttpResponse.json({ detail: 'x' }, { status: event }) : HttpResponse.json(event))));
+  server.use(
+    http.get(`${API}/events/${ID}`, () => (typeof event === 'number' ? HttpResponse.json({ detail: 'x' }, { status: event }) : HttpResponse.json(event))),
+    http.get(`${API}/clubs/${CLUB}/my-membership`, () => (typeof membership === 'number' ? HttpResponse.json({ detail: 'x' }, { status: membership }) : HttpResponse.json({ joinRequestStatus: 'none', ...membership }))),
+  );
   return renderWithProviders(
     <StranglerProvider value={NEXT_ROUTES}>
       <EditEvent id={ID} />
@@ -104,11 +108,55 @@ describe('EditEvent', () => {
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });
 
-  it('sends someone else’s event back to the feed without showing the form', async () => {
+  it('lets an organizer of the event’s club edit an event someone else created', async () => {
     setup(stored({ organizerId: 'other' }));
+    expect(await title()).toHaveValue('Dune night');
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it('sends a plain member of the club back to the feed without showing the form', async () => {
+    setup(stored({ organizerId: 'other' }), undefined, { isMember: true, role: 'member' });
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
     expect(nav.push).not.toHaveBeenCalled();
+    expect(nav.toast).not.toHaveBeenCalled();
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+  });
+
+  it('sends the creator back to the feed once they no longer organize the club, as the backend refuses them', async () => {
+    setup(stored(), undefined, { isMember: true, role: 'member' });
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    expect(nav.toast).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+  });
+
+  it('sends a creator who left the club back to the feed', async () => {
+    setup(stored(), undefined, { isMember: false });
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+  });
+
+  it('re-checks a cached organizer role before showing the form', async () => {
+    mockSession({ id: 'u1', role: 'organizer' });
+    server.use(
+      http.get(`${API}/events/${ID}`, () => HttpResponse.json(stored())),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' })),
+    );
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <EditEvent id={ID} />
+      </StranglerProvider>,
+      'uk',
+      (qc) => qc.setQueryData(['club', CLUB, 'membership'], { isMember: true, role: 'organizer', joinRequestStatus: 'none' }, { updatedAt: Date.now() - 1000 }),
+    );
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+  });
+
+  it('offers a retry when the club role cannot be checked', async () => {
+    setup(stored(), undefined, 500);
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it('blocks a save with an empty title or date and sends nothing', async () => {
