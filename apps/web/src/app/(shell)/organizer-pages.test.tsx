@@ -80,6 +80,8 @@ const session = (role: string) =>
     http.get(`${API}/clubs/my`, () => HttpResponse.json([])),
     http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json(clubJson({ id: CLUB, organizerId: 'u1' }))),
     http.get(`${API}/events/${EVENT}`, () => HttpResponse.json(eventJson({ id: EVENT, clubId: CLUB, organizerId: 'u1', date: '2099-05-01T18:30:00.000Z' }))),
+    // the edit-event gate asks for the club role, as the backend decides by it
+    http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role: role === 'organizer' ? 'organizer' : 'member', joinRequestStatus: 'none' })),
   );
 
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
@@ -213,7 +215,7 @@ describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ ele
 });
 
 describe('/events/:id/edit page', () => {
-  it('sends a plain user who does not own the event to /events, without the organizers-only toast', async () => {
+  it('sends a plain member of the event’s club to /events, without the organizers-only toast', async () => {
     session('user');
     server.use(http.get(`${API}/events/${EVENT}`, () => HttpResponse.json(eventJson({ id: EVENT, clubId: CLUB, organizerId: 'someone-else', date: '2099-05-01T18:30:00.000Z' }))));
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await EditEventPage(params(EVENT))}</StranglerProvider>);

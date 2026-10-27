@@ -205,6 +205,33 @@ test.describe('r6 dual-target', () => {
     expect(got['legacy/Kyiv']).toBe(got['next/Kyiv']);
   });
 
+  // Angular's header row has a 4th, empty flex item; Next must keep the same justify-between gaps (SCRUM-34)
+  for (const role of ['guest', 'member'] as const) {
+    test(`shell header geometry at 1280: logo and nav links at the same x (${role})`, async ({ browser }) => {
+      const read = async (name: 'legacy' | 'next') => {
+        const s = await side(browser, name, role);
+        await s.page.goto(club);
+        await settle(s.page);
+        if (role === 'member') await s.page.getByTestId('nav-support').waitFor();
+        // link x depends on the width of the logo and link fonts
+        await s.page.evaluate(() => document.fonts.ready);
+        const xs = await s.page.evaluate(() =>
+          ['header a[aria-label="BookClub home"]', '[data-testid="nav-events"]', '[data-testid="nav-clubs"]', '[data-testid="nav-support"]']
+            .map((sel) => document.querySelector(sel)?.getBoundingClientRect().x ?? null),
+        );
+        await s.ctx.close();
+        return xs;
+      };
+      const legacy = await read('legacy');
+      const next = await read('next');
+      console.log(`header x (${role}): legacy=${JSON.stringify(legacy)} next=${JSON.stringify(next)}`);
+      expect(next.map((x) => x === null)).toEqual(legacy.map((x) => x === null));
+      next.forEach((x, i) => {
+        if (x !== null) expect(Math.abs(x - legacy[i]!), `element ${i}`).toBeLessThanOrEqual(2);
+      });
+    });
+  }
+
   for (const role of ['guest', 'member', 'organizer'] as const) {
     for (const theme of ['light', 'dark'] as const) {
       test(`axe parity ${role} ${theme}: Next has no rule and no more nodes than legacy`, async ({ browser }) => {

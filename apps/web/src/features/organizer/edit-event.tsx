@@ -3,9 +3,10 @@
 
 import type { ClubEvent, EventForm } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorPanel } from '@/components/error-panel';
 import { Pending } from '@/features/auth/require-auth';
+import { useMyMembership } from '@/features/club-detail/use-club-detail';
 import { useSession } from '@/features/clubs/use-session';
 import { useEvent } from '@/features/events/use-events';
 import { usePush } from '@/lib/use-push';
@@ -40,8 +41,13 @@ export function EditEvent({ id }: { id: string }) {
   const query = useEvent(id);
   const { user } = useSession();
   const event = query.data;
-  // only the event's organizer edits it; anyone else is sent to the feed (admins included, as in Angular)
-  const foreign = event !== undefined && user !== null && event.organizerId !== user.id;
+  // backend require_event_club_organizer: an organizer of the event's club edits it, whoever created it;
+  // anyone else (admins and a creator who lost the role included) is sent to the feed
+  const [mountedAt] = useState(() => Date.now());
+  const membership = useMyMembership(event?.clubId ?? '', event !== undefined && user !== null, true);
+  // a cached role from an earlier visit is trusted only after this visit has re-checked it
+  const checked = membership.isSuccess && membership.dataUpdatedAt >= mountedAt;
+  const foreign = checked && membership.data.role !== 'organizer';
   const replace = useReplace();
 
   // replace, not push: Back from the feed would otherwise land on this page and redirect again
@@ -50,7 +56,8 @@ export function EditEvent({ id }: { id: string }) {
   }, [foreign, replace]);
 
   if (query.isError) return <ErrorPanel onRetry={() => void query.refetch()} />;
-  if (!event || foreign) return <Pending />;
+  if (membership.isError) return <ErrorPanel onRetry={() => void membership.refetch()} />;
+  if (!event || !checked || foreign) return <Pending />;
   return <EditEventForm key={event.id} event={event} />;
 }
 

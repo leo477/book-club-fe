@@ -56,4 +56,5 @@ Lighthouse (lab, guest) on 2026-10-19 gave `/clubs` Performance 70 on Angular an
 
 | Date | Edge Config version | Change | Metrics check | By |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 2026-10-27 | 10 -> 11 | wave 1 (`wave-1.json`): /privacy, /terms, /clubs, /clubs/:id, /, /events, /events/:id 10 -> 50 % | split verified: buckets 0-49 Next, 50-99 Angular; canary SQL and Speed Insights not yet checked | owner (CLI), checked by Claude |
+| 2026-10-27 | 11 -> 12 | wave 2 (`wave-2.json`): public read routes 50 -> 100 %; /profile, /support, /support/new, /login, /register, /auth/callback 10 -> 50 % | split verified: public routes all buckets Next; the six wave-B routes buckets 0-49 Next, 50-99 Angular. Applied on the owner's instruction before the 72 h window; canary SQL, Speed Insights and the manual Google sign-in check (SCRUM-84) were still open. Render logs in the previous 20 min showed one Google exchange 200 and one 400 (sign-in started from a deployment URL outside the BE origin allowlist) | owner instruction, written and checked by Claude |
