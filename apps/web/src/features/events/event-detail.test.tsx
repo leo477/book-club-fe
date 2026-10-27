@@ -17,7 +17,10 @@ beforeEach(() => toast.mockReset());
 
 const t = (key: string) => messages.uk[key] ?? key;
 
-function mockApi(event: Record<string, unknown> | number, user: Record<string, unknown> = {}) {
+const ORGANIZER = { isMember: true, role: 'organizer' };
+
+/** `membership` is the viewer's /clubs/c1/my-membership answer (a number answers with that status); edit and cancel follow it. */
+function mockApi(event: Record<string, unknown> | number, user: Record<string, unknown> = {}, membership: Record<string, unknown> | number = { isMember: false }) {
   let current = typeof event === 'number' ? null : event;
   const gets: string[] = [];
   server.use(
@@ -28,6 +31,7 @@ function mockApi(event: Record<string, unknown> | number, user: Record<string, u
       return typeof event === 'number' ? new HttpResponse(null, { status: event }) : HttpResponse.json(current);
     }),
     http.get(`${API}/books/stores`, () => HttpResponse.json([])),
+    http.get(`${API}/clubs/c1/my-membership`, () => (typeof membership === 'number' ? HttpResponse.json({ detail: 'x' }, { status: membership }) : HttpResponse.json({ joinRequestStatus: 'none', ...membership }))),
   );
   return { gets, set: (next: Record<string, unknown>) => (current = next) };
 }
@@ -240,8 +244,82 @@ describe('EventDetail', () => {
       expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument();
     });
 
+    it('shows edit and cancel to an organizer of the club who did not create the event', async () => {
+      mockApi(eventJson({ organizerId: 'someone-else' }), { id: 'u1' }, ORGANIZER);
+      renderWithProviders(<EventDetail id="e1" />);
+      expect(await screen.findByRole('link', { name: t('EVENTS.editEvent') })).toHaveAttribute('href', '/events/e1/edit');
+      expect(screen.getByRole('button', { name: t('EVENTS.cancel_event') })).toBeInTheDocument();
+    });
+
+    it('hides the controls from a plain member of the club', async () => {
+      const asked = vi.fn();
+      mockApi(eventJson(), { id: 'u1' });
+      server.use(
+        http.get(`${API}/clubs/c1/my-membership`, () => {
+          asked();
+          return HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' });
+        }),
+      );
+      renderWithProviders(<EventDetail id="e1" />);
+      await screen.findByText('Dune night');
+      await waitFor(() => expect(asked).toHaveBeenCalled());
+      expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument();
+    });
+
+    it('hides the controls from the creator once they no longer organize the club, as the backend refuses them', async () => {
+      const asked = vi.fn();
+      mockApi(eventJson(), { id: 'o1' });
+      server.use(
+        http.get(`${API}/clubs/c1/my-membership`, () => {
+          asked();
+          return HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' });
+        }),
+      );
+      renderWithProviders(<EventDetail id="e1" />);
+      await screen.findByText('Dune night');
+      await waitFor(() => expect(asked).toHaveBeenCalled());
+      expect(screen.queryByRole('link', { name: t('EVENTS.editEvent') })).not.toBeInTheDocument();
+      expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument();
+    });
+
+    it('shows no controls while the role is still being looked up', async () => {
+      let release: () => void = () => undefined;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      mockApi(eventJson(), { id: 'o1' });
+      server.use(
+        http.get(`${API}/clubs/c1/my-membership`, async () => {
+          await held;
+          return HttpResponse.json({ isMember: true, role: 'organizer', joinRequestStatus: 'none' });
+        }),
+      );
+      renderWithProviders(<EventDetail id="e1" />);
+      await screen.findByText('Dune night');
+      expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument();
+      release();
+      expect(await screen.findByText(t('EVENTS.organizer_controls'))).toBeInTheDocument();
+    });
+
+    it('hides the controls but keeps the page when the role lookup fails', async () => {
+      const asked = vi.fn();
+      mockApi(eventJson(), { id: 'o1' });
+      server.use(
+        http.get(`${API}/clubs/c1/my-membership`, () => {
+          asked();
+          return HttpResponse.json({ detail: 'x' }, { status: 500 });
+        }),
+      );
+      renderWithProviders(<EventDetail id="e1" />);
+      expect(await screen.findByRole('heading', { level: 1, name: 'Dune night' })).toBeInTheDocument();
+      await waitFor(() => expect(asked).toHaveBeenCalled());
+      expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument();
+      expect(screen.queryByText(t('EVENTS.load_error'))).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Alpha Readers/ })).toBeInTheDocument();
+    });
+
     it('links to the legacy edit page and cancels the event after a confirmation', async () => {
-      const api = mockApi(eventJson(), { id: 'o1' });
+      const api = mockApi(eventJson(), { id: 'o1' }, ORGANIZER);
       const cancel = vi.fn(() => {
         api.set(eventJson({ status: 'cancelled' }));
         return HttpResponse.json(eventJson({ status: 'cancelled' }));
@@ -260,7 +338,7 @@ describe('EventDetail', () => {
     });
 
     it('keeps focus on the page heading while a confirmed cancel is in flight', async () => {
-      mockApi(eventJson(), { id: 'o1' });
+      mockApi(eventJson(), { id: 'o1' }, ORGANIZER);
       server.use(http.patch(`${API}/events/e1/cancel`, () => new Promise(() => undefined)));
       renderWithProviders(<EventDetail id="e1" />);
       await userEvent.click(await screen.findByRole('button', { name: t('EVENTS.cancel_event') }));
@@ -271,7 +349,7 @@ describe('EventDetail', () => {
     });
 
     it('dismisses the confirmation on Escape and returns focus to the trigger', async () => {
-      const api = mockApi(eventJson(), { id: 'o1' });
+      const api = mockApi(eventJson(), { id: 'o1' }, ORGANIZER);
       const cancel = vi.fn();
       server.use(http.patch(`${API}/events/e1/cancel`, cancel));
       renderWithProviders(<EventDetail id="e1" />);
@@ -286,7 +364,7 @@ describe('EventDetail', () => {
     });
 
     it('dismisses the confirmation without cancelling, moving focus into it and back out', async () => {
-      mockApi(eventJson(), { id: 'o1' });
+      mockApi(eventJson(), { id: 'o1' }, ORGANIZER);
       renderWithProviders(<EventDetail id="e1" />);
       const trigger = await screen.findByRole('button', { name: t('EVENTS.cancel_event') });
       await userEvent.click(trigger);
