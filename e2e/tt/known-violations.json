@@ -1,0 +1,30 @@
+[
+  {
+    "key": "require-trusted-types-for | HTMLScriptElement src /_next/static/chunks/* | trusted-types-sink",
+    "reason": "Turbopack production runtime assigns script.src for chunk loading without a policy (nextjs#bundler is never created); every page. Needs a default policy or a Next/turbopack fix before enforcing."
+  },
+  {
+    "key": "require-trusted-types-for | HTMLScriptElement src /_vercel/insights/script.js | trusted-types-sink",
+    "reason": "@vercel/analytics injects its script with a plain string src; needs a default policy or a self-hosted loader before enforcing."
+  },
+  {
+    "key": "require-trusted-types-for | HTMLScriptElement src /_vercel/speed-insights/script.js | trusted-types-sink",
+    "reason": "@vercel/speed-insights, same as insights."
+  },
+  {
+    "key": "require-trusted-types-for | Function | trusted-types-sink",
+    "reason": "Zod v4 JIT probe `Function('')` in try/catch (chunk with zod core); fix with z.config({ jitless: true }) or accept in the default policy."
+  },
+  {
+    "key": "script-src |  | eval",
+    "reason": "Same zod `Function('')` probe, but blocked by the ENFORCED CSP (no unsafe-eval); harmless today because it is caught, goes away with jitless."
+  },
+  {
+    "key": "console | This document requires 'TrustedScriptURL' assignment | ",
+    "reason": "Console twin of the HTMLScriptElement src violation."
+  },
+  {
+    "key": "console | This document requires 'TrustedScript' assignment | ",
+    "reason": "Console twin of the Function violation."
+  }
+]
