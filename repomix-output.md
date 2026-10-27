@@ -53,6 +53,7 @@ The content is organized as follows:
     i18n-check.yml
     lighthouse.yml
     parity.yml
+    playwright-cache.yml
     release-source.yml
     scorecard.yml
     secret-scan.yml
