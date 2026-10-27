@@ -8,6 +8,7 @@ export function buildCsp(nonce: string, dev = false): string {
     "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
+    // Supabase host is the static production project: change it together with vercel.json and the Render SUPABASE_URL if the project or a custom domain changes.
     "img-src 'self' data: blob: https://covers.openlibrary.org https://books.google.com https://books.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com https://xaiamosmktaowsxpcrde.supabase.co",
     `connect-src 'self' data: https://vercel.live ${CSP_WS_ORIGIN} https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com`,
     'frame-src https://vercel.live',
