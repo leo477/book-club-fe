@@ -68,9 +68,20 @@ const chatCalls = (m: ChatMock) => m.log.filter((r) => /\/chat\/|ws-ticket|\/unr
 /** The mock sockets that are still open and answered auth. */
 const live = (m: ChatMock, roomId?: string) => m.open(roomId).filter((s) => s.authed);
 
-/** Resolves after the page ran a task of its own, so events the mock already sent (a close, a frame) have been dispatched to the client. */
-const pageTick = (page: Page) =>
-  page.evaluate(
+/** The mock marks a socket authed on receiving the frame, before the client reaches `open`; a pushed frame that renders proves it did, so the fake clock may move. History is awaited first so the frame cannot arrive through the history GET instead. */
+async function socketReady(page: Page, m: ChatMock): Promise<void> {
+  await expect.poll(() => live(m, ROOM_A).length).toBe(1);
+  await expect(page.getByText('Повідомлення A-6', { exact: true })).toBeVisible();
+  m.push(ROOM_A, { text: 'ready' });
+  await expect(page.getByText('ready', { exact: true })).toBeVisible();
+}
+
+/** So the retry timer is armed before the fake clock moves; the page tick lets the close the mock already sent reach the client. */
+async function attemptSettled(page: Page, m: ChatMock): Promise<void> {
+  await expect
+    .poll(() => m.sockets.length > 0 && m.sockets.every((s) => s.closed) && m.tickets.length === m.sockets.length, { timeout: 15_000 })
+    .toBe(true);
+  await page.evaluate(
     () =>
       new Promise<void>((done) => {
         const { port1, port2 } = new MessageChannel();
@@ -78,19 +89,6 @@ const pageTick = (page: Page) =>
         port2.postMessage(0);
       }),
   );
-
-/** The mock logs the auth frame on receipt; a frame pushed back and rendered proves the client finished the handshake and holds a connected socket, so the fake clock may move. */
-async function socketReady(page: Page, m: ChatMock): Promise<void> {
-  await expect.poll(() => live(m, ROOM_A).length).toBe(1);
-  const text = `ready-${m.sockets.length}`;
-  m.push(ROOM_A, { text });
-  await expect(page.getByText(text)).toBeVisible();
-}
-
-/** The last failed attempt is fully over (socket closed, its ticket used, the close dispatched to the client), so its retry timer is armed before the fake clock moves. */
-async function attemptSettled(page: Page, m: ChatMock): Promise<void> {
-  await expect.poll(() => m.sockets.length > 0 && m.sockets.every((s) => s.closed) && m.tickets.length === m.sockets.length).toBe(true);
-  await pageTick(page);
 }
 
 test.beforeEach(() => {
