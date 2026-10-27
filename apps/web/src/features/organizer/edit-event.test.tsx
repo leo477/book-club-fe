@@ -135,21 +135,57 @@ describe('EditEvent', () => {
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });
 
-  it('re-checks a cached organizer role before showing the form', async () => {
+  /** Renders with a cached organizer role and holds the fresh /my-membership answer until `release(role)`. */
+  function withCachedOrganizer() {
+    const eventLoaded = vi.fn();
+    let release: (role: string) => void = () => undefined;
+    const held = new Promise<string>((resolve) => {
+      release = resolve;
+    });
     mockSession({ id: 'u1', role: 'organizer' });
     server.use(
-      http.get(`${API}/events/${ID}`, () => HttpResponse.json(stored())),
-      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' })),
+      http.get(`${API}/events/${ID}`, () => {
+        eventLoaded();
+        return HttpResponse.json(stored());
+      }),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, async () => HttpResponse.json({ isMember: true, role: await held, joinRequestStatus: 'none' })),
     );
     renderWithProviders(
       <StranglerProvider value={NEXT_ROUTES}>
         <EditEvent id={ID} />
       </StranglerProvider>,
       'uk',
-      (qc) => qc.setQueryData(['club', CLUB, 'membership'], { isMember: true, role: 'organizer', joinRequestStatus: 'none' }, { updatedAt: Date.now() - 1000 }),
+      // cached just before this visit mounted (1 ms back, so it can never share the mount timestamp)
+      (qc) => qc.setQueryData(['club', CLUB, 'membership'], { isMember: true, role: 'organizer', joinRequestStatus: 'none' }, { updatedAt: Date.now() - 1 }),
     );
+    return { eventLoaded, release: (role: string) => release(role) };
+  }
+
+  it('does not trust a cached organizer role: a fresh member answer redirects and the form never appears', async () => {
+    const appeared = vi.fn();
+    const observer = new MutationObserver(() => {
+      if (screen.queryByTestId('event-title-input')) appeared();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const { eventLoaded, release } = withCachedOrganizer();
+    await waitFor(() => expect(eventLoaded).toHaveBeenCalled());
+    // the event is in, the role answer is held: the cached organizer role alone must not open the form
+    await expect(screen.findByTestId('event-title-input', {}, { timeout: 300 })).rejects.toThrow();
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    release('member');
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    observer.disconnect();
+    expect(appeared).not.toHaveBeenCalled();
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
+  });
+
+  it('shows the form for a cached organizer only after the fresh answer confirms the role', async () => {
+    const { eventLoaded, release } = withCachedOrganizer();
+    await waitFor(() => expect(eventLoaded).toHaveBeenCalled());
+    await expect(screen.findByTestId('event-title-input', {}, { timeout: 300 })).rejects.toThrow();
+    release('organizer');
+    expect(await title()).toHaveValue('Dune night');
+    expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it('offers a retry when the club role cannot be checked', async () => {

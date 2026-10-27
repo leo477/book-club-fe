@@ -9,6 +9,7 @@ import { LazyBoundary } from '@/components/lazy-boundary';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { BookStores } from '@/features/club-detail/sidebar';
+import { useMyMembership } from '@/features/club-detail/use-club-detail';
 import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/format';
@@ -79,6 +80,9 @@ export function EventDetail({ id: rawId }: { id: string }) {
   const queryClient = useQueryClient();
   const { user } = useSession();
   const query = useEvent(id);
+  // backend require_event_club_organizer: edit and cancel belong to the organizers of the event's club, not to its creator.
+  // A cached role is enough here: it only picks the buttons, the edit page re-checks it and the backend refuses the rest.
+  const membership = useMyMembership(query.data?.clubId ?? '', user !== null && query.data !== undefined);
   const { rsvp, pendingIds } = useRsvp();
   const [bookOpen, setBookOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
@@ -124,7 +128,8 @@ export function EventDetail({ id: rawId }: { id: string }) {
     );
   }
 
-  const isOrganizer = user !== null && event.organizerId === user.id;
+  // shown only once the role is known; a failed lookup hides them
+  const isOrganizer = user !== null && membership.data?.role === 'organizer';
   const actioning = pendingIds.includes(event.id) || cancelEvent.isPending;
   const venue = event.afterMeetingVenue;
 
