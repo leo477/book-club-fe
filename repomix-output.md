@@ -573,6 +573,7 @@ docs/
     SECURITY-R7.md
     SECURITY-R9.md
     SHIM-INVENTORY-R13.md
+    TRUSTED-TYPES-CAPTURE.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -615,6 +616,8 @@ e2e/
     member.setup.ts
     routes.ts
     snapshot-guard.ts
+  tt/
+    known-violations.json
   audit-helper.ts
   global-setup.ts
   seed-guard.ts
@@ -1132,6 +1135,7 @@ PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
 playwright.parity-setup.config.ts
 playwright.parity.config.ts
+playwright.tt.config.ts
 postcss.config.json
 proxy.conf.json
 README.md

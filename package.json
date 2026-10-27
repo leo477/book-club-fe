@@ -24,6 +24,7 @@
     "audit:full:ui": "npx playwright test --config=playwright.full-audit.config.ts e2e/ui",
     "audit:full:api": "npx playwright test --config=playwright.full-audit.config.ts e2e/api",
     "parity": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/har-diff.ts",
+    "test:tt": "playwright test --config=playwright.tt.config.ts",
     "parity:setup-member": "playwright test --config=playwright.parity-setup.config.ts",
     "parity:seo": "playwright test --config=playwright.parity.config.ts e2e/parity/seo.spec.ts",
     "parity:visual": "playwright test --config=playwright.parity.config.ts e2e/parity/visual.spec.ts",
