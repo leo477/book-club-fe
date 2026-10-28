@@ -6,7 +6,7 @@ Five cumulative Edge Config writes for the 10 % -> 100 % schedule. Tickets: SCRU
 | --- | --- | --- | --- |
 | `wave-1.json` | SCRUM-188 | applied 2026-10-27 (version 11) | public read routes (7) 50 %, rest 10 % |
 | `wave-2.json` | SCRUM-189 | applied 2026-10-27 (version 12) | public 100 %, profile/support/auth (6) 50 % |
-| `wave-3.json` | SCRUM-190 | 2026-10-30 at the earliest | profile/support/auth 100 %, organizer + quizzes (13) 50 % |
+| `wave-3.json` | SCRUM-190 | applied 2026-10-28 (version 13) | profile/support/auth (6) 100 %, organizer + quizzes (13) 50 % |
 | `wave-4.json` | SCRUM-191 | 2026-11-02 at the earliest | organizer + quizzes 100 %, `/chats` 50 %, `shell.chatWidget` 10 % |
 | `wave-5.json` | SCRUM-192 | 2026-11-05 at the earliest | `/chats` and `shell.chatWidget` 100 % |
 
