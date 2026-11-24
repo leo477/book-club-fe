@@ -16,9 +16,9 @@
   },
   "devDependencies": {
     "@types/ws": "8.18.2",
-    "@vitest/coverage-v8": "5.0.5",
-    "msw": "3.0.3",
-    "vitest": "5.0.5",
-    "ws": "8.22.0"
+    "@vitest/coverage-v8": "5.1.0",
+    "msw": "3.0.4",
+    "vitest": "5.1.0",
+    "ws": "8.22.2"
   }
 }
